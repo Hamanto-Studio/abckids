@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABC & 123 Learning for Kids</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            background: #ffffff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            color: #000000;
+        }
+
+        #mode-selection {
+            display: block;
+        }
+
+        #learning-screen {
+            display: none;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 2rem 3rem;
+            font-size: 2rem;
+            border: 2px solid #000000;
+            border-radius: 0;
+            cursor: pointer;
+            font-weight: 300;
+            transition: all 0.3s;
+            background: #ffffff;
+            color: #000000;
+            letter-spacing: 1px;
+        }
+
+        .mode-btn:hover {
+            background: #000000;
+            color: #ffffff;
+            transform: translateY(-3px);
+        }
+
+        .randomize-option {
+            margin-top: 3rem;
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .randomize-option input[type="checkbox"] {
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            accent-color: #000000;
+        }
+
+        .character-display {
+            font-size: 15rem;
+            font-weight: 400;
+            margin: 2rem 0;
+            animation: pulse 1.5s infinite;
+            letter-spacing: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .instruction {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .progress {
+            font-size: 1.5rem;
+            margin-top: 1rem;
+            opacity: 0.6;
+            font-weight: 300;
+        }
+
+        .back-btn {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            font-size: 1.5rem;
+            background: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover {
+            background: #000000;
+            color: #ffffff;
+            transform: translateY(-3px);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #000000;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            color: #000000;
+            animation: success-pop 0.5s ease-out;
+            pointer-events: none;
+            z-index: 1000;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        @keyframes success-pop {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="mode-selection">
+            <h1>LET'S LEARN</h1>
+            <div class="mode-buttons">
+                <button class="mode-btn numbers-btn" onclick="startMode('numbers')">
+                    Numbers 1-9 & 0
+                </button>
+                <button class="mode-btn alphabet-btn" onclick="startMode('alphabet')">
+                    Alphabet A-Z
+                </button>
+            </div>
+            <div class="randomize-option">
+                <input type="checkbox" id="randomize-checkbox">
+                <label for="randomize-checkbox">Randomize Order</label>
+            </div>
+        </div>
+
+        <div id="learning-screen">
+            <div class="instruction">Find this on your keyboard!</div>
+            <div class="character-display" id="current-character"></div>
+            <div class="progress" id="progress"></div>
+            <button class="back-btn" onclick="goBack()">← Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = '';
+        let currentSequence = [];
+        let currentIndex = 0;
+        let isProcessing = false;
+
+        const numberSequence = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+        const alphabetSequence = [
+            ['A', 'B', 'C'],
+            ['D', 'E', 'F'],
+            ['G', 'H', 'I'],
+            ['J', 'K', 'L'],
+            ['M', 'N', 'O'],
+            ['P', 'Q', 'R'],
+            ['S', 'T', 'U'],
+            ['V', 'W', 'X'],
+            ['Y', 'Z']
+        ].flat();
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function startMode(mode) {
+            currentMode = mode;
+            currentIndex = 0;
+            isProcessing = false;
+
+            const isRandomize = document.getElementById('randomize-checkbox').checked;
+
+            if (mode === 'numbers') {
+                currentSequence = isRandomize ? shuffleArray(numberSequence) : [...numberSequence];
+            } else {
+                currentSequence = isRandomize ? shuffleArray(alphabetSequence) : [...alphabetSequence];
+            }
+
+            document.getElementById('mode-selection').style.display = 'none';
+            document.getElementById('learning-screen').style.display = 'block';
+
+            showCharacter();
+        }
+
+        function speakCharacter(char) {
+            // Phonetic mapping for letters to avoid "capital A" pronunciation
+            const letterPhonetics = {
+                'A': 'Ay', 'B': 'Bee', 'C': 'See', 'D': 'Dee', 'E': 'Ee',
+                'F': 'Eff', 'G': 'Gee', 'H': 'Aitch', 'I': 'Eye', 'J': 'Jay',
+                'K': 'Kay', 'L': 'Ell', 'M': 'Em', 'N': 'En', 'O': 'Oh',
+                'P': 'Pee', 'Q': 'Queue', 'R': 'Ar', 'S': 'Ess', 'T': 'Tee',
+                'U': 'You', 'V': 'Vee', 'W': 'Double-you', 'X': 'Ex', 'Y': 'Why', 'Z': 'Zee'
+            };
+
+            const textToSpeak = letterPhonetics[char] || char;
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.rate = 0.8;
+            utterance.pitch = 1.2;
+            utterance.volume = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function showCharacter() {
+            const char = currentSequence[currentIndex];
+            document.getElementById('current-character').textContent = char;
+            speakCharacter(char);
+            updateProgress();
+        }
+
+        function updateProgress() {
+            document.getElementById('progress').textContent =
+                `${currentIndex + 1} / ${currentSequence.length}`;
+        }
+
+        function goBack() {
+            document.getElementById('mode-selection').style.display = 'block';
+            document.getElementById('learning-screen').style.display = 'none';
+            currentMode = '';
+            isProcessing = false;
+        }
+
+        function playSuccessSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 523.25; // C5
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+
+            // Second note
+            setTimeout(() => {
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioContext.destination);
+                osc2.frequency.value = 659.25; // E5
+                osc2.type = 'sine';
+                gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                osc2.start(audioContext.currentTime);
+                osc2.stop(audioContext.currentTime + 0.5);
+            }, 100);
+        }
+
+        function createConfetti() {
+            const colors = ['#000000', '#333333', '#666666', '#999999', '#cccccc'];
+            const confettiCount = 50;
+
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                document.body.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function showSuccessMessage() {
+            const message = document.createElement('div');
+            message.className = 'success-message';
+            message.textContent = 'GREAT JOB';
+            document.body.appendChild(message);
+
+            setTimeout(() => message.remove(), 1000);
+        }
+
+        function celebrateSuccess() {
+            playSuccessSound();
+            createConfetti();
+            showSuccessMessage();
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (currentMode === '' || currentSequence.length === 0 || isProcessing) return;
+
+            const pressedKey = event.key.toUpperCase();
+            const currentChar = currentSequence[currentIndex];
+
+            // Handle numbers (including number pad)
+            if (currentMode === 'numbers') {
+                if (pressedKey === currentChar || pressedKey === currentChar.toString()) {
+                    isProcessing = true;
+                    celebrateSuccess();
+
+                    setTimeout(() => {
+                        currentIndex++;
+                        if (currentIndex < currentSequence.length) {
+                            showCharacter();
+                            isProcessing = false;
+                        } else {
+                            // Completed all items
+                            setTimeout(() => {
+                                goBack();
+                                isProcessing = false;
+                            }, 500);
+                        }
+                    }, 1500);
+                }
+            } else if (currentMode === 'alphabet') {
+                if (pressedKey === currentChar) {
+                    isProcessing = true;
+                    celebrateSuccess();
+
+                    setTimeout(() => {
+                        currentIndex++;
+                        if (currentIndex < currentSequence.length) {
+                            showCharacter();
+                            isProcessing = false;
+                        } else {
+                            setTimeout(() => {
+                                goBack();
+                                isProcessing = false;
+                            }, 500);
+                        }
+                    }, 1500);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
